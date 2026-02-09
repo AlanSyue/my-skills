@@ -49,14 +49,20 @@ install_codex() {
   link_dir "$HOME/.agents/skills"
 }
 
+install_copilot() {
+  echo "Installing for GitHub Copilot..."
+  link_dir "$HOME/.copilot/skills"
+}
+
 # If args provided, install only selected agents
 if [ $# -gt 0 ]; then
   for arg in "$@"; do
     case "$arg" in
       claude) install_claude ;;
       gemini) install_gemini ;;
-      codex)  install_codex ;;
-      *) echo "Unknown agent: $arg (options: claude, gemini, codex)" ;;
+      codex)   install_codex ;;
+      copilot) install_copilot ;;
+      *) echo "Unknown agent: $arg (options: claude, gemini, codex, copilot)" ;;
     esac
   done
   echo "Done!"
@@ -67,8 +73,8 @@ fi
 echo "Select agents to install (space to toggle, enter to confirm):"
 echo ""
 
-agents=("claude" "gemini" "codex")
-selected=(true true true)
+agents=("claude" "gemini" "codex" "copilot")
+selected=(true true true true)
 
 # Check if running in interactive terminal
 if [ ! -t 0 ]; then
@@ -76,6 +82,7 @@ if [ ! -t 0 ]; then
   install_claude
   install_gemini
   install_codex
+  install_copilot
   echo "Done!"
   exit 0
 fi
@@ -132,7 +139,8 @@ for i in "${!agents[@]}"; do
     case "${agents[$i]}" in
       claude) install_claude ;;
       gemini) install_gemini ;;
-      codex)  install_codex ;;
+      codex)   install_codex ;;
+      copilot) install_copilot ;;
     esac
     installed=true
   fi

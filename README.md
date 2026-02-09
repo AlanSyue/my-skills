@@ -1,6 +1,6 @@
 # My Skills
 
-A collection of reusable agent skills compatible with Claude Code, Gemini CLI, and Codex CLI.
+A collection of reusable agent skills compatible with Claude Code, Gemini CLI, Codex CLI, and GitHub Copilot.
 
 Skills live in the `skills/` directory. Each subfolder contains a `SKILL.md` file.
 
@@ -22,7 +22,7 @@ cp .env.example .env
 ./install.sh
 ```
 
-Symlinks the `skills/` directory into `~/.claude/skills`, `~/.gemini/skills`, and `~/.agents/skills`. New skills added to `skills/` are automatically available — no need to re-run.
+Symlinks the `skills/` directory into `~/.claude/skills`, `~/.gemini/skills`, `~/.agents/skills`, and `~/.copilot/skills`. New skills added to `skills/` are automatically available — no need to re-run.
 
 ## Skills
 
