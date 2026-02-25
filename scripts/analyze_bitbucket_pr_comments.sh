@@ -73,7 +73,9 @@ jq -n \
     title: $pr.title,
     state: $pr.state,
     author: $pr.author.user.displayName,
+    repo: $pr.fromRef.repository.slug,
     source: $pr.fromRef.displayId,
     target: $pr.toRef.displayId,
+    latestCommit: $pr.fromRef.latestCommit,
     comments: $comments
   }'
