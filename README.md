@@ -33,3 +33,4 @@ Symlinks the `skills/` directory into `~/.claude/skills`, `~/.gemini/skills`, `~
 | **smart-commit** | `/smart-commit` | Generate and execute a Conventional Commit from the current branch name and staged diff. Extracts ticket number from branch name automatically. |
 | **d2-diagram** | `/d2-diagram <target>` | Trace an API endpoint or method's call chain and generate a D2 diagram (sequence diagram or flowchart). Renders to SVG if `d2` CLI is installed. |
 | **asana-automation** | `/asana-automation <ID or keyword>` | Query an Asana task by GID or title keyword, analyze the requirements, implement changes, then automatically move the task to the done section and reassign to the reporter. |
+| **analyze-bitbucket-pr-comments** | `/analyze-bitbucket-pr-comments <pr-url>` | Fetch Bitbucket PR review comments, analyze each comment, suggest fixes or replies, then execute after confirmation. |
