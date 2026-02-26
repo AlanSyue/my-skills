@@ -14,6 +14,7 @@ cp .env.example .env
 ```
 
 - **Atlassian** (Jira, Confluence): `ATLASSIAN_BASE_URL`, `ATLASSIAN_EMAIL`, `ATLASSIAN_API_TOKEN`
+- **Bitbucket**: `BITBUCKET_API_TOKEN` ([App Password](https://bitbucket.org/account/settings/app-passwords/) with scopes: Account Read, Pull requests Read/Write), shares `ATLASSIAN_EMAIL`. Optionally set `BITBUCKET_ACCOUNT_ID` if the token lacks Account Read scope.
 - **Asana**: `ASANA_ACCESS_TOKEN`, `ASANA_WORKSPACE_GID`, `ASANA_DONE_SECTION_NAME`
 
 ## Installation

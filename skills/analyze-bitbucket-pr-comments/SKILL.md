@@ -9,19 +9,22 @@ description: Fetch Bitbucket PR review comments, analyze whether code changes ar
 Given a Bitbucket PR URL, this skill fetches all open review comments, analyzes each one to determine if code changes are needed or a reply is sufficient, presents a summary for user confirmation, then executes the approved actions.
 
 ## Inputs
-- Bitbucket PR URL (e.g. https://bitbucket.example.com/projects/PROJ/repos/my-repo/pull-requests/123)
+- Bitbucket PR URL (e.g. https://bitbucket.org/workspace/repo/pull-requests/123)
 
 ## Requirements
 - Local environment variables (in `$HOME/my-skills/.env`):
-  - ATLASSIAN_BASE_URL (e.g. https://bitbucket.example.com)
-  - ATLASSIAN_EMAIL
-  - ATLASSIAN_API_TOKEN
+  - ATLASSIAN_EMAIL (your Atlassian account email)
+  - BITBUCKET_API_TOKEN (Bitbucket App Password with scopes: **Account: Read**, **Pull requests: Read**, **Pull requests: Write**)
+  - BITBUCKET_ACCOUNT_ID (optional, your Bitbucket account ID — used as fallback if the token lacks Account: Read scope)
 - Script: `scripts/analyze_bitbucket_pr_comments.sh` must be executable.
 - Script: `scripts/reply_bitbucket_pr_comment.sh` must be executable.
 
 ## Steps
 1. Parse the PR URL and execute `$HOME/my-skills/scripts/analyze_bitbucket_pr_comments.sh <pr-url>` to fetch PR info and comments.
-   - The script automatically filters out RESOLVED comments and comments where the last reply is from yourself (ATLASSIAN_EMAIL).
+   - The script automatically filters out deleted comments, your own top-level comments, and comments where the last reply is from yourself.
+   - **If the output contains `"comments": []` but you suspect the self-filtering is not working** (e.g. comments that should be filtered still appear), it likely means the script cannot identify the current user. STOP and ask the user to either:
+     1. Add **Account: Read** scope to their Bitbucket App Password, OR
+     2. Set `BITBUCKET_ACCOUNT_ID` in `$HOME/my-skills/.env` (can be found from any Bitbucket API response containing their user info)
    - If the returned comments array is empty, inform the user "No open comments require attention" and stop.
 2. **Guard check — verify the local repo matches the PR:**
    - **Repo name**: Compare the `repo` field from the script output with the current directory name (or git remote slug). If they don't match, STOP and warn the user they are in the wrong repository.
@@ -53,4 +56,4 @@ Given a Bitbucket PR URL, this skill fetches all open review comments, analyzes 
 - If a comment references code outside the current repository, note it as out of scope.
 
 ## Example
-/analyze-bitbucket-pr-comments https://bitbucket.example.com/projects/PROJ/repos/my-repo/pull-requests/123
+/analyze-bitbucket-pr-comments https://bitbucket.org/my-workspace/my-repo/pull-requests/123
