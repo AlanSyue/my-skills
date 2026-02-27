@@ -7,7 +7,7 @@ description: Query an Asana task by ID or title keyword via the Asana API, retri
 
 ## Environment Variables
 
-Managed in the repository root `.env` file (see `.env.example` for reference):
+Managed in `$HOME/my-skills/.env` (see `.env.example` for reference):
 - `ASANA_ACCESS_TOKEN` — Asana Personal Access Token
 - `ASANA_WORKSPACE_GID` — Asana Workspace GID (required when searching by title)
 - `ASANA_DONE_SECTION_NAME` — Section name to move the task to after completion (default: `To Be Test`)
@@ -15,7 +15,7 @@ Managed in the repository root `.env` file (see `.env.example` for reference):
 Load them before making API calls:
 
 ```bash
-source "$(git rev-parse --show-toplevel)/.env"
+source "$HOME/my-skills/.env"
 ```
 
 ## Workflow
