@@ -14,7 +14,7 @@ cp .env.example .env
 ```
 
 - **Atlassian** (Jira, Confluence): `ATLASSIAN_BASE_URL`, `ATLASSIAN_EMAIL`, `ATLASSIAN_API_TOKEN`
-- **Bitbucket**: `BITBUCKET_API_TOKEN` ([App Password](https://bitbucket.org/account/settings/app-passwords/) with scopes: Account Read, Pull requests Read/Write), shares `ATLASSIAN_EMAIL`. Optionally set `BITBUCKET_ACCOUNT_ID` if the token lacks Account Read scope.
+- **Bitbucket**: `BITBUCKET_API_TOKEN` ([App Password](https://bitbucket.org/account/settings/app-passwords/) with scopes: Account Read, Pull requests Read/Write), shares `ATLASSIAN_EMAIL`. Optionally set `BITBUCKET_ACCOUNT_ID` if the token lacks Account Read scope. Optionally set `BITBUCKET_PR_SPEC_PATH` to a local file or URL containing PR title/description conventions.
 - **Asana**: `ASANA_ACCESS_TOKEN`, `ASANA_WORKSPACE_GID`, `ASANA_DONE_SECTION_NAME`
 - **Google Slides**: `GOOGLE_CREDENTIALS_FILE` (path to GCP credential JSON — supports both [Service Account](https://cloud.google.com/iam/docs/service-accounts) and OAuth2 Desktop Client), `GOOGLE_SLIDES_SHARE_EMAIL` (email to share presentations with). Requires Python packages in a venv — see [Google Slides Setup](#google-slides-setup) below.
 
@@ -58,4 +58,5 @@ Then run the script using the venv Python:
 | **d2-diagram** | `/d2-diagram <target>` | Trace an API endpoint or method's call chain and generate a D2 diagram (sequence diagram or flowchart). Renders to SVG if `d2` CLI is installed. |
 | **asana-automation** | `/asana-automation <ID or keyword>` | Query an Asana task by GID or title keyword, analyze the requirements, implement changes, then automatically move the task to the done section and reassign to the reporter. |
 | **analyze-bitbucket-pr-comments** | `/analyze-bitbucket-pr-comments <pr-url>` | Fetch Bitbucket PR review comments, analyze each comment, suggest fixes or replies, then execute after confirmation. |
+| **bitbucket-pr** | `/bitbucket-pr [branch or PR-URL]` | Create or update a Bitbucket Cloud PR with auto-generated title and description from git diff. Supports PR templates and team conventions. |
 | **generate-slides** | `/generate-slides <topic>` | Generate a slide deck from a topic or context, then convert it into a Google Slides presentation after user confirmation. |
