@@ -5,6 +5,7 @@ import os
 import pickle
 import re
 import sys
+import uuid
 
 
 def load_env():
@@ -134,15 +135,27 @@ def get_oauth2_credentials(key_file, scopes):
 def main():
     load_env()
 
-    # Read markdown from stdin or file argument
-    if len(sys.argv) > 1:
-        file_path = sys.argv[1]
+    # Parse --update PRESENTATION_ID from sys.argv before other argument handling
+    update_presentation_id = None
+    argv = sys.argv[1:]
+    if '--update' in argv:
+        idx = argv.index('--update')
+        if idx + 1 >= len(argv):
+            print('Error: --update requires a presentation ID argument', file=sys.stderr)
+            sys.exit(1)
+        update_presentation_id = argv[idx + 1]
+        # Remove --update and its value from argv so remaining args work as before
+        argv = argv[:idx] + argv[idx + 2:]
+
+    # Read markdown from remaining argv or stdin
+    if argv:
+        file_path = argv[0]
         with open(file_path, 'r') as f:
             md_text = f.read()
     elif not sys.stdin.isatty():
         md_text = sys.stdin.read()
     else:
-        print('Usage: create_google_slides.py [file.md]  or  echo "..." | create_google_slides.py', file=sys.stderr)
+        print('Usage: create_google_slides.py [--update PRESENTATION_ID] [file.md]  or  echo "..." | create_google_slides.py', file=sys.stderr)
         sys.exit(1)
 
     slides = parse_markdown(md_text)
@@ -183,33 +196,79 @@ def main():
         slides_service = build('slides', 'v1', credentials=creds)
         drive_service = build('drive', 'v3', credentials=creds)
 
-        # Create new presentation
-        presentation = slides_service.presentations().create(
-            body={'title': slides[0]['title']}
-        ).execute()
-        presentation_id = presentation['presentationId']
+        if update_presentation_id:
+            # Update mode: reuse existing presentation
+            presentation_id = update_presentation_id
 
-        # Remember default slide ID to delete later
-        default_slide_id = presentation['slides'][0]['objectId']
+            # Fetch existing presentation to get current slide IDs
+            existing_presentation = slides_service.presentations().get(
+                presentationId=presentation_id
+            ).execute()
+            existing_slide_ids = [s['objectId'] for s in existing_presentation.get('slides', [])]
 
-        # Batch Update #1: create all slides and delete the default blank slide
-        requests = []
-        for i, slide in enumerate(slides):
-            layout = 'TITLE_AND_BODY' if slide['body'].strip() else 'TITLE'
+            # Keep the first existing slide temporarily (Google Slides requires at least one slide)
+            # We will delete it after new slides are created
+            slides_to_delete_now = existing_slide_ids[1:]
+            first_old_slide_id = existing_slide_ids[0] if existing_slide_ids else None
+
+            # Generate a unique prefix for new slide IDs to avoid conflicts with old slides
+            uuid_hex = uuid.uuid4().hex
+
+            # Batch Update #1: create new slides and delete all old slides except the first
+            requests = []
+            for i, slide in enumerate(slides):
+                layout = 'TITLE_AND_BODY' if slide['body'].strip() else 'TITLE'
+                requests.append({
+                    'createSlide': {
+                        'insertionIndex': i,
+                        'slideLayoutReference': {'predefinedLayout': layout},
+                        'objectId': f'new_{uuid_hex[:8]}_{i}'
+                    }
+                })
+            for old_id in slides_to_delete_now:
+                requests.append({
+                    'deleteObject': {'objectId': old_id}
+                })
+            slides_service.presentations().batchUpdate(
+                presentationId=presentation_id,
+                body={'requests': requests}
+            ).execute()
+
+            # Delete the original first slide now that new slides exist
+            if first_old_slide_id:
+                slides_service.presentations().batchUpdate(
+                    presentationId=presentation_id,
+                    body={'requests': [{'deleteObject': {'objectId': first_old_slide_id}}]}
+                ).execute()
+
+        else:
+            # Create mode: create a new presentation
+            presentation = slides_service.presentations().create(
+                body={'title': slides[0]['title']}
+            ).execute()
+            presentation_id = presentation['presentationId']
+
+            # Remember default slide ID to delete later
+            default_slide_id = presentation['slides'][0]['objectId']
+
+            # Batch Update #1: create all slides and delete the default blank slide
+            requests = []
+            for i, slide in enumerate(slides):
+                layout = 'TITLE_AND_BODY' if slide['body'].strip() else 'TITLE'
+                requests.append({
+                    'createSlide': {
+                        'insertionIndex': i,
+                        'slideLayoutReference': {'predefinedLayout': layout},
+                        'objectId': f'slide_{i}'
+                    }
+                })
             requests.append({
-                'createSlide': {
-                    'insertionIndex': i,
-                    'slideLayoutReference': {'predefinedLayout': layout},
-                    'objectId': f'slide_{i}'
-                }
+                'deleteObject': {'objectId': default_slide_id}
             })
-        requests.append({
-            'deleteObject': {'objectId': default_slide_id}
-        })
-        slides_service.presentations().batchUpdate(
-            presentationId=presentation_id,
-            body={'requests': requests}
-        ).execute()
+            slides_service.presentations().batchUpdate(
+                presentationId=presentation_id,
+                body={'requests': requests}
+            ).execute()
 
         # Refresh presentation to get placeholder IDs
         presentation = slides_service.presentations().get(
@@ -338,18 +397,19 @@ def main():
                 body={'requests': requests}
             ).execute()
 
-        # Share presentation via Drive API
-        share_email = os.environ.get('GOOGLE_SLIDES_SHARE_EMAIL')
-        if share_email:
-            drive_service.permissions().create(
-                fileId=presentation_id,
-                body={
-                    'type': 'user',
-                    'role': 'writer',
-                    'emailAddress': share_email
-                },
-                sendNotificationEmail=False
-            ).execute()
+        if not update_presentation_id:
+            # Share presentation via Drive API (only for new presentations)
+            share_email = os.environ.get('GOOGLE_SLIDES_SHARE_EMAIL')
+            if share_email:
+                drive_service.permissions().create(
+                    fileId=presentation_id,
+                    body={
+                        'type': 'user',
+                        'role': 'writer',
+                        'emailAddress': share_email
+                    },
+                    sendNotificationEmail=False
+                ).execute()
 
         # Output result as JSON
         result = {
